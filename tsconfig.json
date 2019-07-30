@@ -1,0 +1,19 @@
+{
+    "compilerOptions": {
+        "baseUrl": "./",
+        "lib": ["es6", "dom"],
+        "noImplicitAny": true,
+        "outDir": "./extension/js/",
+        "paths": {
+            "@src/*": ["src/*"],
+            "@content/*": ["src/content/*"],
+            "@background/*": ["src/background/*"]
+        },
+        "target": "esnext",
+        "strict": true,
+        "pretty": true,
+        "typeRoots": ["./node_modules/@types", "./node_modules/web-ext-types"]
+    },
+    "include": ["./src/**/*"],
+    "exclude": ["./extension/"]
+  }

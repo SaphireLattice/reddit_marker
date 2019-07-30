@@ -1,0 +1,7 @@
+.vscode/
+node_modules/
+web-ext-artifacts/
+extension/js
+*.js
+
+package-lock.json
