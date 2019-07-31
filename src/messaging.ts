@@ -1,6 +1,22 @@
 namespace Marker.Messaging {
     export let Listeners: Message[] = [];
 
+    export interface UserTag {
+
+    }
+
+    export interface UserTags {
+        [username: string]: UserTag;
+    }
+
+    // Shorthands:
+    // Background -> Content = Content
+    // Content -> Background = Bg;
+    export enum Types {
+        USER_TAGS = "user_tags", // Content -> Tags for users as needed
+        USERS_INFO = "users_info" // Bg -> Reports all visible users on page
+    }
+
     export class Message<Data = any, Response = any> {
         private listener: (any);
         constructor(
@@ -9,7 +25,7 @@ namespace Marker.Messaging {
             public sender?: browser.runtime.MessageSender,
             private nonce?: number)
         {
-            this.nonce = nonce ? nonce : window.crypto.getRandomValues(new Uint32Array(1))[0] / 4294967295;
+            this.nonce = nonce ? nonce : window.crypto.getRandomValues(new Uint32Array(1))[0];
         };
 
         send(replyType: string = this.type): Promise<Response> {
