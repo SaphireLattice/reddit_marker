@@ -16,10 +16,13 @@ namespace Marker.Settings {
         "ignoreComments",
         "posts",
         "postsDisable",
+        "postsAbove",
         "score",
         "scoreDisable",
+        "scoreAbove",
         "average",
-        "averageDisable"
+        "averageDisable",
+        "averageAbove"
     ]
 
     export function Init() {
@@ -68,6 +71,10 @@ namespace Marker.Settings {
         Controls.get("score")!.valueAsNumber = tag.settings.score;
         Controls.get("average")!.valueAsNumber = tag.settings.average;
 
+        Controls.get("scoreAbove")!.value = tag.settings.scoreBelow ? "above" : "below";
+        Controls.get("postsAbove")!.value = tag.settings.postsBelow ? "above" : "below";
+        Controls.get("averageAbove")!.value = tag.settings.averageBelow ? "above" : "below";
+
         Controls.get("posts")!.disabled = tag.settings.excludePosts;
         Controls.get("score")!.disabled = tag.settings.excludeScore;
         Controls.get("average")!.disabled = tag.settings.excludeAverage;
@@ -93,9 +100,17 @@ namespace Marker.Settings {
         tag.settings.score = Controls.get("score")!.valueAsNumber;
         tag.settings.average = Controls.get("average")!.valueAsNumber;
 
+        tag.settings.scoreBelow = Controls.get("scoreAbove")!.value == "below";
+        tag.settings.postsBelow = Controls.get("postsAbove")!.value == "below";
+        tag.settings.averageBelow = Controls.get("averageAbove")!.value == "below";
+
         Controls.get("posts")!.disabled = tag.settings.excludePosts;
         Controls.get("score")!.disabled = tag.settings.excludeScore;
         Controls.get("average")!.disabled = tag.settings.excludeAverage;
+
+        Controls.get("postsAbove")!.disabled = tag.settings.excludePosts;
+        Controls.get("scoreAbove")!.disabled = tag.settings.excludeScore;
+        Controls.get("averageAbove")!.disabled = tag.settings.excludeAverage;
     }
 
     export function UpdateTag(tag: Marker.Data.DbTag) {

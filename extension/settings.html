@@ -49,18 +49,30 @@
                 <h3>Stats</h3>
                 <label data-inline>
                     <span>Posts: </span>
+                    <select name="postsAbove">
+                        <option>above</option>
+                        <option>below</option>
+                    </select>
                     <input name="posts" title="posts" type="number" step="any" value="0" autocomplete="off" placeholder="0">
                     <span>Ignore: </span>
                     <input name="postsDisable" title="postsDisable" type="checkbox">
                 </label>
                 <label data-inline>
                     <span>Score: </span>
+                    <select name="scoreAbove">
+                        <option>above</option>
+                        <option>below</option>
+                    </select>
                     <input name="score" title="score" type="number" step="any" value="3" autocomplete="off" placeholder="0">
                     <span>Ignore: </span>
                     <input name="scoreDisable" title="scoreDisable" type="checkbox">
                 </label>
                 <label data-inline>
                     <span>Average: </span>
+                    <select name="averageAbove">
+                        <option>above</option>
+                        <option>below</option>
+                    </select>
                     <input name="average" title="average" type="number" step="any" value="0" autocomplete="off" disabled placeholder="0">
                     <span>Ignore: </span>
                     <input name="averageDisable" title="averageDisable" type="checkbox" checked>
