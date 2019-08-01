@@ -147,6 +147,8 @@ namespace Marker.Content {
         TagElements.set(tagsData.username, existing);
     }
 
+    // Rudimentary, but ok enough for now
+    // Need to make proper UI later
     export async function TagPopup(event: MouseEvent, element: Element, tag: Marker.Messaging.UserTagEntry) {
         let removed = false;
         const main = document.createElement("span");
@@ -166,6 +168,10 @@ namespace Marker.Content {
     }
 
     if (document.readyState == "complete" || document.readyState == "interactive") {
+        // Mostly a debugging thing. The context is
+        //  scanned so quickly that the background
+        //  does not have time to attach a listener
+        //  to handle scan results.
         setTimeout(() => Init(), 100);
     } else {
         document.addEventListener("DOMContentLoaded", Init);

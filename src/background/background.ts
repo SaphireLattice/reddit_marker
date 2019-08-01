@@ -132,11 +132,10 @@ namespace Marker.Background {
                     return;
                 console.log(msg.data);
                 (<string[]> msg.data).forEach(username =>
-                    (Users[username] || new Data.User(username))
+                    (Users[username] || new Data.User(username, Users))
                     .init(Database)
                     .then(async (user) =>
                     {
-                        Users[username] = user;
                         return user.tags;
                     }).then((tags: Data.DbUserTags[]) => {
                         if (tags.length <= 0)
@@ -284,8 +283,9 @@ namespace Marker.Data {
         public tags: DbUserTags[] = [];
         public loaded: number = 0;
         public dbUser?: DbUser;
-        constructor(public username: string) {
+        constructor(public username: string, userList?: {[username: string]: User}) {
             this.username = this.username.toLowerCase();
+            if (userList) userList[this.username] = this;
         }
 
         async init(database: Database.Instance, skipUpdate: boolean = false): Promise<User> {
@@ -304,6 +304,12 @@ namespace Marker.Data {
                     throw new Error("No database user info after fetching about");
                 }
                 await this.save(database);
+                // Set load time because if we get this user again,
+                //  then it might try to re-scan it again while in
+                //  the process of scanning it already, wasting data
+                //  in the process. This way copy will prematurely
+                //  exit without data, but existing one will return
+                //  and correctly signal its tags (if any).
                 this.loaded = Common.Now();
                 await this.onlineAnalyze(database);
                 this.tags = await Marker.Background.Tags!.getEligibleTags(this);
