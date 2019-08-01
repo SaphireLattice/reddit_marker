@@ -37,26 +37,23 @@ namespace Marker.Tags {
         };
     }
 
-    enum SubActivityMode {
-        MODE_OR =           1 << 0, // default AND
-        EXCLUDE_KARMA =     1 << 1,
-        EXCLUDE_POSTS =     1 << 2,
-        EXCLUDE_AVERAGE =   1 << 3,
-        // normally uses "above"
-        KARMA_BELOW =       1 << 4,
-        POSTS_BELOW =       1 << 5,
-        AVERAGE_BELOW =     1 << 6,
-        IGNORE_LINKS =      1 << 7,
-        IGNORE_COMMENTS =   1 << 8,
-        INVALID = EXCLUDE_KARMA + EXCLUDE_POSTS + EXCLUDE_AVERAGE,
-        INVALID_SOURCE = IGNORE_LINKS + IGNORE_COMMENTS
-    }
-
     interface SubActivitySettings {
         subreddits: string[];
-        mode: SubActivityMode;
 
-        karma: number;
+        conditionsOr: boolean;
+
+        excludeScore: boolean;
+        excludePosts: boolean;
+        excludeAverage: boolean;
+
+        scoreBelow: boolean;
+        postsBelow: boolean;
+        averageBelow: boolean;
+
+        ignoreLinks: boolean;
+        ignoreComments: boolean;
+
+        score: number;
         posts: number;
         average: number;
     }
@@ -64,29 +61,29 @@ namespace Marker.Tags {
     class SubredditActivity extends Tag<SubActivitySettings> {
         constructor(data: Data.DbTag) {
             super(data);
-            if ((this.settings.mode & SubActivityMode.INVALID) == SubActivityMode.INVALID) {
+            if (this.settings.excludeAverage && this.settings.excludePosts && this.settings.excludeScore) {
                 throw new Error(`No active statistics on the tag "${this.dbData.name}" (${this.dbData.id})`);
             }
-            if ((this.settings.mode & SubActivityMode.INVALID_SOURCE) == SubActivityMode.INVALID_SOURCE) {
+            if (this.settings.ignoreComments && this.settings.ignoreLinks) {
                 throw new Error(`No active sources on the tag "${this.dbData.name}" (${this.dbData.id})`);
             }
         }
 
         public compare(what: "karma" | "posts" | "average", stat: Data.DbUserStats): boolean {
-            const score = (this.settings.mode & SubActivityMode.IGNORE_COMMENTS ? 0 : stat.commentKarma) +
-                        (this.settings.mode & SubActivityMode.IGNORE_LINKS ? 0 : stat.linkKarma)
-            const count = (this.settings.mode & SubActivityMode.IGNORE_COMMENTS ? 0 : stat.commentCount) +
-                        (this.settings.mode & SubActivityMode.IGNORE_LINKS ? 0 : stat.linkCount)
+            const score = (this.settings.ignoreComments ? 0 : stat.commentKarma) +
+                        (this.settings.ignoreLinks ? 0 : stat.linkKarma)
+            const count = (this.settings.ignoreComments ? 0 : stat.commentCount) +
+                        (this.settings.ignoreLinks ? 0 : stat.linkCount)
             let below: boolean = false;
             switch (what) {
-                case "karma": below = (this.settings.mode & SubActivityMode.KARMA_BELOW) != 0; break;
-                case "posts": below = (this.settings.mode & SubActivityMode.POSTS_BELOW) != 0; break;
-                case "average": below = (this.settings.mode & SubActivityMode.AVERAGE_BELOW) != 0; break;
+                case "karma": below = this.settings.scoreBelow; break;
+                case "posts": below = this.settings.postsBelow; break;
+                case "average": below = this.settings.averageBelow; break;
             }
             let compare = (left: number, right: number): boolean =>
                 !below ? left > right : left < right;
             switch (what) {
-                case "karma": return compare(score, this.settings.karma);
+                case "karma": return compare(score, this.settings.score);
                 case "posts": return compare(count, this.settings.posts);
                 case "average": return compare(score / count, this.settings.average);
             }
@@ -94,10 +91,10 @@ namespace Marker.Tags {
 
         public async check(user: Data.User): Promise<Data.DbUserTags | null> {
             let sortBy: "score" | "posts" | "subreddit" = "score";
-            if (this.settings.mode & SubActivityMode.EXCLUDE_KARMA) {
+            if (this.settings.excludeScore) {
                 sortBy = "posts";
             }
-            if (this.settings.mode & SubActivityMode.EXCLUDE_AVERAGE) {
+            if (this.settings.excludeAverage) {
                 sortBy = "posts";
             }
 
@@ -105,18 +102,18 @@ namespace Marker.Tags {
             for (const subreddit in user.stats) {
                 if (this.settings.subreddits.indexOf(subreddit) != -1 && user.stats.hasOwnProperty(subreddit)) {
                     const stat = user.stats[subreddit];
-                    let eligible = (this.settings.mode & SubActivityMode.MODE_OR) ? false : true;
-                    if (!(this.settings.mode & SubActivityMode.EXCLUDE_KARMA)) {
+                    let eligible = (this.settings.conditionsOr) ? false : true;
+                    if (!(this.settings.excludeScore)) {
                         let value = this.compare("karma", stat);
-                        eligible = (this.settings.mode & SubActivityMode.MODE_OR) ? (eligible || value) : (eligible && value);
+                        eligible = (this.settings.conditionsOr) ? (eligible || value) : (eligible && value);
                     }
-                    if (!(this.settings.mode & SubActivityMode.EXCLUDE_POSTS)) {
+                    if (!(this.settings.excludePosts)) {
                         let value = this.compare("posts", stat);
-                        eligible = (this.settings.mode & SubActivityMode.MODE_OR) ? (eligible || value) : (eligible && value);
+                        eligible = (this.settings.conditionsOr) ? (eligible || value) : (eligible && value);
                     }
-                    if (!(this.settings.mode & SubActivityMode.EXCLUDE_AVERAGE)) {
+                    if (!(this.settings.excludeAverage)) {
                         let value = this.compare("average", stat);
-                        eligible = (this.settings.mode & SubActivityMode.MODE_OR) ? (eligible || value) : (eligible && value);
+                        eligible = (this.settings.conditionsOr) ? (eligible || value) : (eligible && value);
                     }
                     if (eligible) {
                         list.push({

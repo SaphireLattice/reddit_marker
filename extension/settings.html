@@ -1,0 +1,79 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width,initial-scale=1">
+
+    <title>Reddit User Tagger settings</title>
+
+    <link rel="stylesheet" href="main.css" type="text/css">
+    <script type="text/javascript" src="js/common.js">
+    </script>
+    <script type="text/javascript" src="js/messaging.js">
+    </script>
+    <script type="text/javascript" src="js/content/settings.js">
+    </script>
+</head>
+
+<body>
+<div id="column">
+    <h1>Settings</h1>
+    <hr>
+    <div id="tagList">
+        <button id="addTagButton">Add tag!</button>
+    </div>
+    <div id="content">
+        <div id="controls">
+            <form id="form">
+                <label>
+                    <span>Tag name:</span>
+                    <input name="name" title="name" type="text" value="" placeholder="Enter tag name" autocomplete="off">
+                </label>
+                <label>
+                    <span>Color: <span id="colorBox" name="colorBox"></span></span>
+                    <input name="color" title="color" type="text" value="" placeholder="#ff0000" autocomplete="off">
+                </label>
+                <label>
+                    <span>Subreddits list (case-insensitive, with or without r/, each on new line): </span>
+                    <textarea name="subreddits" title="subreddits" placeholder="None"></textarea>
+                </label>
+                <label>
+                    <span>Ignore posts: </span>
+                    <input name="ignoreLinks" title="ignoreLinks" type="checkbox">
+                </label>
+                <label>
+                    <span>Ignore comments: </span>
+                    <input name="ignoreComments" title="ignoreComments" type="checkbox">
+                </label>
+                <h3>Stats</h3>
+                <label data-inline>
+                    <span>Posts: </span>
+                    <input name="posts" title="posts" type="number" step="any" value="0" autocomplete="off" placeholder="0">
+                    <span>Ignore: </span>
+                    <input name="postsDisable" title="postsDisable" type="checkbox">
+                </label>
+                <label data-inline>
+                    <span>Score: </span>
+                    <input name="score" title="score" type="number" step="any" value="3" autocomplete="off" placeholder="0">
+                    <span>Ignore: </span>
+                    <input name="scoreDisable" title="scoreDisable" type="checkbox">
+                </label>
+                <label data-inline>
+                    <span>Average: </span>
+                    <input name="average" title="average" type="number" step="any" value="0" autocomplete="off" disabled placeholder="0">
+                    <span>Ignore: </span>
+                    <input name="averageDisable" title="averageDisable" type="checkbox" checked>
+                </label>
+                <label>
+                    <span>Require all at least one condition to match (checked), otherwise need all (unchecked): </span>
+                    <input name="andOr" title="andOr" type="checkbox">
+                </label>
+                <button name="delete" title="delete">Delete</button>
+            </form>
+        </span>
+    </div>
+</div>
+</body>
+
+</html>

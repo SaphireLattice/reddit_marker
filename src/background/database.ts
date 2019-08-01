@@ -244,5 +244,35 @@ namespace Marker.Database {
 
             return await this.rawSet(table.name, object);
         }
+
+        public async delete(tableName: string, value: number | string | IDBKeyRange, column?: string) {
+            return await new Promise((resolve, reject) => {
+                var transaction = this.database!.transaction(tableName, "readwrite")
+                transaction.addEventListener("error", (error) => {
+                    console.error(`Database transaction failed for ${tableName}`, error);
+                    reject(error);
+                });
+
+                let request: IDBRequest<IDBCursorWithValue | null>;
+                if (column)
+                    request = transaction.objectStore(tableName).index(column).openCursor(value);
+                else
+                    request = transaction.objectStore(tableName).openCursor(value);
+
+                request.addEventListener("error", (error) => {
+                    console.error(`Database GETLIST request failed for ${tableName}["${value}"]`, error);
+                    reject(error);
+                });
+                request.addEventListener("success", (event) => {
+                    let cursor: IDBCursorWithValue = (<any> event.target!).result;
+                    if (cursor) {
+                        cursor.delete();
+                        cursor.continue();
+                    } else {
+                        resolve();
+                    }
+                });
+            });
+        }
     }
 }

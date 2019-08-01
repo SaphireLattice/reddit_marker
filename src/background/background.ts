@@ -127,7 +127,7 @@ namespace Marker.Background {
             msgPlain.nonce
         );
         switch (msg.type) {
-            case "users_info":
+            case Messaging.Types.USERS_INFO:
                 if (msg.data.length <= 0)
                     return;
                 console.log(msg.data);
@@ -160,12 +160,72 @@ namespace Marker.Background {
                     })
                 );
                 break;
+            case Messaging.Types.GET_TAGS:
+                Database.getList("tags").then(tags => msg.reply(tags));
+                break;
+            case Messaging.Types.SET_TAG:
+                Database.set("tags", msg.data);
+                TryRefresh();
+                break;
+            case Messaging.Types.DELETE_TAG:
+                Database.delete("tags", msg.data);
+                TryRefresh();
+                break;
             default:
                 msg.reply(`Unknown message type ${msg.type}`, false, "unknown_message_type");
                 console.error(`Unknown message type ${msg.type}`);
                 throw new Error(`Unknown message type ${msg.type}`);
         }
     });
+
+    let RefreshTimeout: any;
+    export function TryRefresh() {
+        if (RefreshTimeout) {
+            clearTimeout(RefreshTimeout);
+        }
+        RefreshTimeout = setTimeout(() => DoFullRefresh(), 4000);
+    }
+
+    export async function DoFullRefresh() {
+        RefreshTimeout = null;
+        const usersDb = await Database.getList<Data.DbUser>("users");
+        let promises: Promise<any>[] = []
+        for (let i = 0; i < usersDb.length; i++) {
+            const username: string = usersDb[i].username;
+            const promise = (Users[username] ? Promise.resolve(Users[username]) :
+                new Data.User(username, Users).init(Database)).then(user =>
+                user.refreshTags(Database)
+            ).then(tags => {
+                if (tags.length <= 0) {
+                    return;
+                }
+
+                browser.tabs.query({url: "https://*.reddit.com/*", discarded: false, status: "complete"}).then((tabs) =>
+                    tabs.forEach((tab) => {
+                        browser.tabs.sendMessage(tab.id!,
+                        {
+                            data: {
+                                username: username,
+                                tags: tags.map((tag): any =>
+                                    ({
+                                        tagId: tag.tagId,
+                                        tagName: Tags!.tags.filter(t => t.dbData.id == tag.tagId)[0].dbData.name,
+                                        tagColor: Tags!.tags.filter(t => t.dbData.id == tag.tagId)[0].dbData.color,
+                                        tagData: tag.tagData,
+                                        updated: tag.updated
+                                    }))
+                            },
+                            type: Marker.Messaging.Types.USER_TAGS,
+                            nonce: window.crypto.getRandomValues(new Uint32Array(1))[0]
+                        });
+                    })
+                );
+                return tags;
+            });
+            promises.push(promise);
+        }
+        return Promise.all(promises);
+    }
 }
 
 namespace Marker.Data {
@@ -312,11 +372,18 @@ namespace Marker.Data {
                 //  and correctly signal its tags (if any).
                 this.loaded = Common.Now();
                 await this.onlineAnalyze(database);
-                this.tags = await Marker.Background.Tags!.getEligibleTags(this);
+                await this.refreshTags(database);
                 await this.save(database);
             }
             this.loaded = Common.Now();
             return this;
+        }
+
+        async refreshTags(database: Marker.Database.Instance) {
+            database.delete("userTags", this.username, "username");
+            this.tags = await Marker.Background.Tags!.getEligibleTags(this);
+            this.save(database);
+            return this.tags;
         }
 
         async fetch(): Promise<RedditUserAbout> {

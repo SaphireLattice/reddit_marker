@@ -18,6 +18,9 @@ namespace Marker.Messaging {
     // Background -> Content = Content
     // Content -> Background = Bg;
     export enum Types {
+        GET_TAGS = "get_tags",
+        SET_TAG = "set_tag",
+        DELETE_TAG = "delete_tag",
         USER_TAGS = "user_tags", // Content -> Tags for users as needed
         USERS_INFO = "users_info" // Bg -> Reports all visible users on page
     }
@@ -37,7 +40,7 @@ namespace Marker.Messaging {
             if (this.sender) {
                 throw new Error("Sending is used to start messaging chain, use reply instead");
             }
-            if (Marker.Common.IsContent()) {
+            if (!Marker.Common.IsBackground()) {
                 return new Promise((resolve, reject) => {
                     browser.runtime.sendMessage({
                         data: this.data,
