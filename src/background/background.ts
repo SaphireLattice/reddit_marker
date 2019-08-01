@@ -128,6 +128,8 @@ namespace Marker.Background {
         );
         switch (msg.type) {
             case "users_info":
+                if (msg.data.length <= 0)
+                    return;
                 console.log(msg.data);
                 (<string[]> msg.data).forEach(username =>
                     (Users[username] || new Data.User(username))
@@ -136,19 +138,26 @@ namespace Marker.Background {
                     {
                         Users[username] = user;
                         return user.tags;
-                    }).then((tags: any[]) => {
-                        if (tags.length > 0) {
-                            console.log(username, tags);
-                            browser.tabs.sendMessage(sender!.tab!.id!,
-                            {
-                                data: {
-                                    username: username,
-                                    tags: tags
-                                },
-                                type: Marker.Messaging.Types.USER_TAGS,
-                                nonce: window.crypto.getRandomValues(new Uint32Array(1))[0]
-                            })
-                        }
+                    }).then((tags: Data.DbUserTags[]) => {
+                        if (tags.length <= 0)
+                            return;
+                        console.log(username, tags);
+                        browser.tabs.sendMessage(sender!.tab!.id!,
+                        {
+                            data: {
+                                username: username,
+                                tags: tags.map((tag): any =>
+                                    ({
+                                        tagId: tag.tagId,
+                                        tagName: Tags!.tags.filter(t => t.dbData.id == tag.tagId)[0].dbData.name,
+                                        tagColor: Tags!.tags.filter(t => t.dbData.id == tag.tagId)[0].dbData.color,
+                                        tagData: tag.tagData,
+                                        updated: tag.updated
+                                    }))
+                            },
+                            type: Marker.Messaging.Types.USER_TAGS,
+                            nonce: window.crypto.getRandomValues(new Uint32Array(1))[0]
+                        })
                     })
                 );
                 break;
@@ -255,7 +264,7 @@ namespace Marker.Data {
     }
 
     export interface DbTag<Settings = any> {
-        id: string;
+        id: number;
         name: string;
         color: string;
         type: string;
@@ -265,7 +274,7 @@ namespace Marker.Data {
 
     export interface DbUserTags<Data = any> {
         username: string;
-        tagId: string;
+        tagId: number;
         tagData: Data;
         updated: number;
     }
@@ -295,6 +304,7 @@ namespace Marker.Data {
                     throw new Error("No database user info after fetching about");
                 }
                 await this.save(database);
+                this.loaded = Common.Now();
                 await this.onlineAnalyze(database);
                 this.tags = await Marker.Background.Tags!.getEligibleTags(this);
                 await this.save(database);

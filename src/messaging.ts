@@ -1,12 +1,17 @@
 namespace Marker.Messaging {
     export let Listeners: Message[] = [];
 
-    export interface UserTag {
-
+    export interface UserTagEntry<Data = any> {
+        tagId: number;
+        tagName: string;
+        tagColor: string;
+        tagData: Data;
+        updated: number;
     }
 
-    export interface UserTags {
-        [username: string]: UserTag;
+    export interface UserTag {
+        username: string;
+        tags: UserTagEntry[];
     }
 
     // Shorthands:
