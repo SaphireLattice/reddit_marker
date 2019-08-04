@@ -195,7 +195,7 @@ namespace Marker.Settings {
     export function SwitchTag(target: Marker.Data.DbTag) {
         RefreshTag(ViewedTag);
         UpdateTag(ViewedTag);
-        SwitchTag(target);
+        ViewedTag = target;
     }
 
     export function RefreshList() {
