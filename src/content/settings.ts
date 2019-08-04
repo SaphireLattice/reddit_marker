@@ -48,7 +48,7 @@ namespace Marker.Settings {
             }
             Controls.forEach(control => control.addEventListener("change", () => {
                 RefreshTag(Marker.Settings.ViewedTag);
-                UpdateTag(Marker.Settings.ViewedTag);
+                UpdateTag(Marker.Settings.ViewedTag, true);
             }))
         });
     }
@@ -128,8 +128,10 @@ namespace Marker.Settings {
         Controls.get("averageAbove")!.disabled = tag.settings.excludeAverage;
     }
 
-    export function UpdateTag(tag: Marker.Data.DbTag) {
-        tag.updated = Common.Now();
+    export function UpdateTag(tag: Marker.Data.DbTag, updateTime: boolean) {
+        if (updateTime) {
+            tag.updated = Common.Now();
+        }
         new Messaging.Message(tag, Messaging.Types.SET_TAG).send();
         RefreshList();
     }
@@ -196,7 +198,7 @@ namespace Marker.Settings {
 
     export function SwitchTag(target: Marker.Data.DbTag) {
         RefreshTag(ViewedTag);
-        UpdateTag(ViewedTag);
+        UpdateTag(ViewedTag, false);
         ViewedTag = target;
         ViewTag(ViewedTag);
     }

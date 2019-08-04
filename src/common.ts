@@ -18,6 +18,11 @@ namespace Marker.Common {
         return Date.now() / 1000 | 0
     }
 
+    export let RequestsActive: number = 0;
+    export let RequestsErrored: number = 0;
+    export let RequestsNull: Promise<any>;
+    let RequestsNullResolve: (data?: any) => void;
+
     // TODO: Make this work via content script?
     export async function GetHttp<Type>(
             path: string,
@@ -27,6 +32,11 @@ namespace Marker.Common {
             protocol: string = DefaultProtocol
         ): Promise<Type> {
         return new Promise((resolve, reject) => {
+            if (RequestsActive == 0) {
+                RequestsNull = new Promise((resolve, reject) => {
+                    RequestsNullResolve = resolve;
+                });
+            }
             let url = `${protocol}//${domain}/${path}`;
             let first = true;
             for (const key in parameters) {
@@ -39,10 +49,25 @@ namespace Marker.Common {
             }
             const request = new XMLHttpRequest();
             request.responseType = responseType;
-            request.addEventListener("load", () => resolve(request.response));
-            request.addEventListener("error", (error) => reject(error));
+            request.addEventListener("load", () => {
+                RequestsActive--;
+                resolve(request.response);
+                if (RequestsActive == 0) {
+                    RequestsNullResolve();
+                }
+            });
+            request.addEventListener("error", (error) => {
+                RequestsActive--;
+                RequestsErrored++;
+                console.error(`GET ${url} failed`, error);
+                reject(error);
+                if (RequestsActive == 0) {
+                    RequestsNullResolve();
+                }
+            });
             request.open("GET", url);
             request.send();
+            RequestsActive++;
         });
     }
 

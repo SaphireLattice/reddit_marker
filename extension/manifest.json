@@ -21,6 +21,7 @@
     "background": {
         "scripts": [
             "js/common.js", "js/messaging.js",
+            "js/background/data.js",
             "js/background/database.js",
             "js/background/tags.js",
             "js/background/background.js"
