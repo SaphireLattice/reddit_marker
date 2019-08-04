@@ -20,6 +20,13 @@ namespace Marker.Tags {
             });
             return (<Data.DbUserTags[]> (await Promise.all(promises)).filter((tag): boolean => tag != null));
         }
+
+        async refresh(database: Marker.Database.Instance) {
+            this.tags = [];
+            database.getList<Marker.Data.DbTag>("tags").then((list) =>
+                this.tags = list.map(dbData => new TagTypes[dbData.type](dbData))
+            );
+        }
     }
 
     abstract class Tag<SettingsType = any> {

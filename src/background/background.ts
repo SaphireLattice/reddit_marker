@@ -188,6 +188,7 @@ namespace Marker.Background {
 
     export async function DoFullRefresh() {
         RefreshTimeout = null;
+        Tags!.refresh(Database);
         const usersDb = await Database.getList<Data.DbUser>("users");
         let promises: Promise<any>[] = []
         for (let i = 0; i < usersDb.length; i++) {
@@ -199,6 +200,8 @@ namespace Marker.Background {
                 if (tags.length <= 0) {
                     return;
                 }
+
+                console.log(`Refreshed tags for ${username}`, tags);
 
                 Common.queryTabs({url: "https://*.reddit.com/*", discarded: false, status: "complete"}).then((tabs) =>
                     tabs.forEach((tab: browser.tabs.Tab | chrome.tabs.Tab) => {
@@ -342,6 +345,7 @@ namespace Marker.Data {
         public stats: {[subreddit: string]: DbUserStats} = {};
         public tags: DbUserTags[] = [];
         public loaded: number = 0;
+        public refreshing: boolean = false;
         public dbUser?: DbUser;
         constructor(public username: string, userList?: {[username: string]: User}) {
             this.username = this.username.toLowerCase();
@@ -359,6 +363,7 @@ namespace Marker.Data {
             let dbStats = await database.getList<DbUserStats>("stats", this.username, "username");
             dbStats.forEach((stat) => this.stats[stat.subreddit] = stat);
             if (!this.dbUser || (!skipUpdate && ((Common.Now() - this.dbUser.updated) > USER_ABOUT_CACHING_TIME)) ) {
+                this.refreshing = true;
                 await this.update(database);
                 if (!this.dbUser) {
                     throw new Error("No database user info after fetching about");
@@ -374,12 +379,16 @@ namespace Marker.Data {
                 await this.onlineAnalyze(database);
                 await this.refreshTags(database);
                 await this.save(database);
+                this.refreshing = false;
             }
             this.loaded = Common.Now();
             return this;
         }
 
         async refreshTags(database: Marker.Database.Instance) {
+            if (this.refreshing) {
+                throw new Error(`Full refresh for user ${this.username} is in progress, aborted`, );
+            }
             database.delete("userTags", this.username, "username");
             this.tags = await Marker.Background.Tags!.getEligibleTags(this);
             this.save(database);
@@ -387,9 +396,14 @@ namespace Marker.Data {
         }
 
         async fetch(): Promise<RedditUserAbout> {
-            return (await Common.GetHttp<RedditUserAboutWrapper>(
+            let aboutJson = await Common.GetHttp<RedditUserAboutWrapper>(
                 `/user/${this.username}/about.json`
-            )).data;
+            );
+            if (!aboutJson.data) {
+                console.error(`Fetch for /usr/${this.username}/about.json returned no data`, aboutJson);
+                throw new Error(`Fetch for /usr/${this.username}/about.json returned no data`);
+            }
+            return aboutJson.data;
         }
 
         async analyzeListing(
