@@ -60,6 +60,8 @@ namespace Marker.Tags {
         ignoreLinks: boolean;
         ignoreComments: boolean;
 
+        global: boolean;
+
         score: number;
         posts: number;
         average: number;
@@ -76,23 +78,32 @@ namespace Marker.Tags {
             }
         }
 
-        public compare(what: "karma" | "posts" | "average", stat: Data.DbUserStats): boolean {
-            const score = (this.settings.ignoreComments ? 0 : stat.commentKarma) +
-                        (this.settings.ignoreLinks ? 0 : stat.linkKarma)
-            const count = (this.settings.ignoreComments ? 0 : stat.commentCount) +
-                        (this.settings.ignoreLinks ? 0 : stat.linkCount)
+        public compareNumber(what: "score" | "posts" | "average", value: number): boolean {
             let below: boolean = false;
             switch (what) {
-                case "karma": below = this.settings.scoreBelow; break;
+                case "score": below = this.settings.scoreBelow; break;
                 case "posts": below = this.settings.postsBelow; break;
                 case "average": below = this.settings.averageBelow; break;
             }
             let compare = (left: number, right: number): boolean =>
                 !below ? left > right : left < right;
             switch (what) {
-                case "karma": return compare(score, this.settings.score);
-                case "posts": return compare(count, this.settings.posts);
-                case "average": return compare(score / count, this.settings.average);
+                case "score": return compare(value, this.settings.score);
+                case "posts": return compare(value, this.settings.posts);
+                case "average": return compare(value, this.settings.average);
+            }
+        }
+
+        public compare(what: "score" | "posts" | "average", stat: Data.DbUserStats): boolean {
+            const score = (this.settings.ignoreComments ? 0 : stat.commentKarma) +
+                        (this.settings.ignoreLinks ? 0 : stat.linkKarma)
+            const count = (this.settings.ignoreComments ? 0 : stat.commentCount) +
+                        (this.settings.ignoreLinks ? 0 : stat.linkCount)
+
+            switch (what) {
+                case "score": return this.compareNumber("score", score);
+                case "posts": return this.compareNumber("posts", count);
+                case "average": return this.compareNumber("average", score / count);
             }
         }
 
@@ -104,30 +115,66 @@ namespace Marker.Tags {
             if (this.settings.excludeAverage) {
                 sortBy = "posts";
             }
-
             let list: {subreddit: string, score: number, posts: number}[] = [];
-            for (const subreddit in user.stats) {
-                if (this.settings.subreddits.indexOf(subreddit) != -1 && user.stats.hasOwnProperty(subreddit)) {
+            if (this.settings.global) {
+                let score = 0;
+                let posts = 0;
+                for (const subreddit in user.stats) {
                     const stat = user.stats[subreddit];
-                    let eligible = (this.settings.conditionsOr) ? false : true;
-                    if (!(this.settings.excludeScore)) {
-                        let value = this.compare("karma", stat);
-                        eligible = (this.settings.conditionsOr) ? (eligible || value) : (eligible && value);
-                    }
-                    if (!(this.settings.excludePosts)) {
-                        let value = this.compare("posts", stat);
-                        eligible = (this.settings.conditionsOr) ? (eligible || value) : (eligible && value);
-                    }
-                    if (!(this.settings.excludeAverage)) {
-                        let value = this.compare("average", stat);
-                        eligible = (this.settings.conditionsOr) ? (eligible || value) : (eligible && value);
-                    }
-                    if (eligible) {
-                        list.push({
-                            subreddit: subreddit,
-                            score: stat.commentKarma + stat.linkKarma,
-                            posts: stat.commentCount + stat.linkCount
-                        });
+                    const subScore = (this.settings.ignoreComments ? 0 : stat.commentKarma) +
+                                (this.settings.ignoreLinks ? 0 : stat.linkKarma)
+                    const subPosts = (this.settings.ignoreComments ? 0 : stat.commentCount) +
+                                (this.settings.ignoreLinks ? 0 : stat.linkCount)
+                    score += subScore;
+                    posts += subPosts;
+                }
+                let eligible = (this.settings.conditionsOr) ? false : true;
+                if (!(this.settings.excludeScore)) {
+                    let value = this.compareNumber("score", score);
+                    eligible = (this.settings.conditionsOr) ? (eligible || value) : (eligible && value);
+                }
+                if (!(this.settings.excludePosts)) {
+                    let value = this.compareNumber("posts", posts);
+                    eligible = (this.settings.conditionsOr) ? (eligible || value) : (eligible && value);
+                }
+                if (!(this.settings.excludeAverage)) {
+                    let value = this.compareNumber("average", score / posts);
+                    eligible = (this.settings.conditionsOr) ? (eligible || value) : (eligible && value);
+                }
+                if (eligible) {
+                    list.push({
+                        subreddit: "all",
+                        score: score,
+                        posts: posts
+                    });
+                }
+            } else {
+                if (this.settings.subreddits.length == 0) {
+                    return null;
+                }
+                for (const subreddit in user.stats) {
+                    if (this.settings.subreddits.indexOf(subreddit) != -1 && user.stats.hasOwnProperty(subreddit)) {
+                        const stat = user.stats[subreddit];
+                        let eligible = (this.settings.conditionsOr) ? false : true;
+                        if (!(this.settings.excludeScore)) {
+                            let value = this.compare("score", stat);
+                            eligible = (this.settings.conditionsOr) ? (eligible || value) : (eligible && value);
+                        }
+                        if (!(this.settings.excludePosts)) {
+                            let value = this.compare("posts", stat);
+                            eligible = (this.settings.conditionsOr) ? (eligible || value) : (eligible && value);
+                        }
+                        if (!(this.settings.excludeAverage)) {
+                            let value = this.compare("average", stat);
+                            eligible = (this.settings.conditionsOr) ? (eligible || value) : (eligible && value);
+                        }
+                        if (eligible) {
+                            list.push({
+                                subreddit: subreddit,
+                                score: stat.commentKarma + stat.linkKarma,
+                                posts: stat.commentCount + stat.linkCount
+                            });
+                        }
                     }
                 }
             }

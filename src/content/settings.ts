@@ -11,6 +11,7 @@ namespace Marker.Settings {
         "name",
         "colorBox",
         "color",
+        "global",
         "subreddits",
         "ignoreLinks",
         "ignoreComments",
@@ -88,7 +89,19 @@ namespace Marker.Settings {
         Controls.get("colorBox")!.style.backgroundColor = tag.color;
 
         (<any> tag)[ButtonSymbol].textContent = tag.name;
-        tag.settings.subreddits = Controls.get("subreddits")!.value.trim().split("\n") .filter(e => !(!e));;
+
+        tag.settings.subreddits = Controls.get("subreddits")!
+            .value.trim().split("\n")
+            .filter(e => !(!e))
+            .map(sub => {
+                let low = sub.toLowerCase();
+                if (low.startsWith("r/")) {
+                    low = low.substr(2);
+                }
+                return low;
+            });
+        tag.settings.global = Controls.get("global")!.checked;
+
         tag.settings.ignoreLinks = Controls.get("ignoreLinks")!.checked;
         tag.settings.ignorePosts = Controls.get("ignoreComments")!.checked;
 
@@ -103,6 +116,8 @@ namespace Marker.Settings {
         tag.settings.scoreBelow = Controls.get("scoreAbove")!.value == "below";
         tag.settings.postsBelow = Controls.get("postsAbove")!.value == "below";
         tag.settings.averageBelow = Controls.get("averageAbove")!.value == "below";
+
+        Controls.get("subreddits")!.disabled = tag.settings.global;
 
         Controls.get("posts")!.disabled = tag.settings.excludePosts;
         Controls.get("score")!.disabled = tag.settings.excludeScore;
@@ -163,6 +178,8 @@ namespace Marker.Settings {
                 ignoreLinks: false,
                 ignoreComments: false,
 
+                global: false,
+
                 score: 0,
                 posts: 3,
                 average: 0
@@ -175,6 +192,12 @@ namespace Marker.Settings {
         ViewTag(ViewedTag);
     }
 
+    export function SwitchTag(target: Marker.Data.DbTag) {
+        RefreshTag(ViewedTag);
+        UpdateTag(ViewedTag);
+        SwitchTag(target);
+    }
+
     export function RefreshList() {
         TagButtons.forEach(button => button.remove());
         const sorted = Tags.slice(0).sort((a,b) => a.updated - b.updated);
@@ -182,7 +205,7 @@ namespace Marker.Settings {
             const button = document.createElement("button");
             (<any> button)[ButtonSymbol] = tag;
             button.textContent = tag.name;
-            button.addEventListener("click", (event) => ViewTag(tag));
+            button.addEventListener("click", (event) => SwitchTag(tag));
             TagList.insertBefore(button, AddButton);
             TagButtons.push(button);
             (<any> tag)[ButtonSymbol] = button;
