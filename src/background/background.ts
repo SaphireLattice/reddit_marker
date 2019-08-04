@@ -212,13 +212,6 @@ namespace Marker.Background {
                 new Data.User(username, Users).init(Database))
             .then(user => user.refreshDone)
             .then((user: Data.User) => user.refreshTags(Database))
-            .catch((error: Error) => {
-                console.error(error);
-                if (typeof error === "object" && error.message && error.message.startsWith(""))
-                    return [];
-                else
-                    throw error;
-            })
             .then((tags: Marker.Data.DbUserTags[]) => {
                 if (tags.length <= 0) {
                     return;
