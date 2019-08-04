@@ -71,9 +71,9 @@ namespace Marker.Settings {
         Controls.get("score")!.valueAsNumber = tag.settings.score;
         Controls.get("average")!.valueAsNumber = tag.settings.average;
 
-        Controls.get("scoreAbove")!.value = tag.settings.scoreBelow ? "above" : "below";
-        Controls.get("postsAbove")!.value = tag.settings.postsBelow ? "above" : "below";
-        Controls.get("averageAbove")!.value = tag.settings.averageBelow ? "above" : "below";
+        Controls.get("scoreAbove")!.value = tag.settings.scoreBelow ? "below" : "above";
+        Controls.get("postsAbove")!.value = tag.settings.postsBelow ? "below" : "above" ;
+        Controls.get("averageAbove")!.value = tag.settings.averageBelow ? "below" : "above";
 
         Controls.get("posts")!.disabled = tag.settings.excludePosts;
         Controls.get("score")!.disabled = tag.settings.excludeScore;
