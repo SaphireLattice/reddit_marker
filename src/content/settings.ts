@@ -129,7 +129,9 @@ namespace Marker.Settings {
     }
 
     export function UpdateTag(tag: Marker.Data.DbTag) {
+        tag.updated = Common.Now();
         new Messaging.Message(tag, Messaging.Types.SET_TAG).send();
+        RefreshList();
     }
 
     export function DeleteTag(tag: Marker.Data.DbTag) {
@@ -201,7 +203,7 @@ namespace Marker.Settings {
 
     export function RefreshList() {
         TagButtons.forEach(button => button.remove());
-        const sorted = Tags.slice(0).sort((a,b) => a.updated - b.updated);
+        const sorted = Tags.slice(0).sort((a,b) => b.updated - a.updated);
         sorted.forEach((tag) => {
             const button = document.createElement("button");
             (<any> button)[ButtonSymbol] = tag;
