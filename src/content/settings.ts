@@ -196,6 +196,7 @@ namespace Marker.Settings {
         RefreshTag(ViewedTag);
         UpdateTag(ViewedTag);
         ViewedTag = target;
+        ViewTag(ViewedTag);
     }
 
     export function RefreshList() {
