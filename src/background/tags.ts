@@ -125,7 +125,8 @@ namespace Marker.Tags {
                 }
             }
             if (list.length > 0) {
-                list.sort((a, b) => a[sortBy]  == b[sortBy] ? 0 : (a[sortBy] > b[sortBy] ? 1 : -1));
+                // We sort descending, so __smaller__ should be sorted as __bigger__, so with a >0
+                list.sort((a, b) => a[sortBy] == b[sortBy] ? 0 : (a[sortBy] > b[sortBy] ? -1 : 1));
                 return {
                     username: user.username,
                     tagId: this.dbData.id,
