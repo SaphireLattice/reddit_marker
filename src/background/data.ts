@@ -273,6 +273,14 @@ namespace Marker.Data {
                     await this.analyzeListing(database, l.data);
                 }
             }
+            if (first) {
+                this.dbUser.lastComment = commentsData.children[0].data.name;
+                first = false
+            }
+            for (let i = 0; i < commentsData.children.length; i++) {
+                const l = commentsData.children[i];
+                await this.analyzeListing(database, l.data);
+            }
 
             first = true;
             let linkData: RedditListing | null = null;
@@ -297,6 +305,14 @@ namespace Marker.Data {
                     const l = linkData.children[i];
                     await this.analyzeListing(database, l.data);
                 }
+            }
+            if (first) {
+                this.dbUser.lastLink = linkData.children[0].data.name;
+                first = false
+            }
+            for (let i = 0; i < linkData.children.length; i++) {
+                const l = linkData.children[i];
+                await this.analyzeListing(database, l.data);
             }
         }
 
