@@ -42,7 +42,7 @@ namespace Marker.Messaging {
             }
             if (!Marker.Common.IsBackground()) {
                 return new Promise((resolve, reject) => {
-                    browser.runtime.sendMessage({
+                    Common.sendMessage({
                         data: this.data,
                         type: this.type,
                         nonce: this.nonce
@@ -50,14 +50,14 @@ namespace Marker.Messaging {
                     this.listener = (message: Message<Response, any>) => {
                         if (this.nonce == message.nonce) {
                             if (message.type.toLowerCase() == replyType.toLowerCase()) {
-                                browser.runtime.onMessage.removeListener(this.listener);
+                                Common.removeMessageListener(this.listener);
                                 resolve(message.data);
                             } else {
                                 reject(message);
                             }
                         }
                     }
-                    browser.runtime.onMessage.addListener(this.listener);
+                    Common.addMessageListener(this.listener);
                 });
             } else {
                 // Current problem: getting the promise to work
@@ -68,7 +68,7 @@ namespace Marker.Messaging {
         reply(response: Response | any, success: boolean = true, type: string = this.type) {
             if (success) {
                 if (Marker.Common.IsBackground()) {
-                    browser.tabs.sendMessage(this.sender!.tab!.id!,
+                    Common.tabsSendMessage(this.sender!.tab!.id!,
                     {
                         data: response,
                         type: type,

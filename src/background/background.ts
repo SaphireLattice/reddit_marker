@@ -113,13 +113,13 @@ namespace Marker.Background {
     export let Tags: Tags.Instance | null = null;
     Database.init().then((db) => Tags = new Marker.Tags.Instance(db));
 
-    browser.browserAction.onClicked.addListener(
-        () => browser.tabs.create({ url: "settings.html" })
+    Common.browserAction.onClicked.addListener(
+        () => Common.tabs.create({ url: "settings.html" })
     );
 
     export const Users: { [name: string]: Data.User} = {};
 
-    browser.runtime.onMessage.addListener((msgPlain: any, sender: browser.runtime.MessageSender) => {
+    Common.addMessageListener((msgPlain: any, sender: browser.runtime.MessageSender) => {
         let msg = new Marker.Messaging.Message(
             msgPlain.data,
             msgPlain.type,
@@ -141,7 +141,7 @@ namespace Marker.Background {
                         if (tags.length <= 0)
                             return;
                         console.log(username, tags);
-                        browser.tabs.sendMessage(sender!.tab!.id!,
+                        Common.tabsSendMessage(sender!.tab!.id!,
                         {
                             data: {
                                 username: username,
@@ -200,9 +200,9 @@ namespace Marker.Background {
                     return;
                 }
 
-                browser.tabs.query({url: "https://*.reddit.com/*", discarded: false, status: "complete"}).then((tabs) =>
-                    tabs.forEach((tab) => {
-                        browser.tabs.sendMessage(tab.id!,
+                Common.queryTabs({url: "https://*.reddit.com/*", discarded: false, status: "complete"}).then((tabs) =>
+                    tabs.forEach((tab: browser.tabs.Tab | chrome.tabs.Tab) => {
+                        Common.tabsSendMessage(tab.id!,
                         {
                             data: {
                                 username: username,

@@ -17,7 +17,7 @@ namespace Marker.Content {
 
     function Init() {
         let href = window.location.href;
-        browser.runtime.onMessage.addListener(HandleMessages);
+        Common.addMessageListener(HandleMessages);
 
         ScanPage();
         setInterval(() => ScanPage(), 2000)
