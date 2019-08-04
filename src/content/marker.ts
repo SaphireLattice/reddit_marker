@@ -16,7 +16,12 @@ namespace Marker.Content {
     const Tags: Map<string, Marker.Messaging.UserTag> = new Map();
 
     function Init() {
-        let href = window.location.href;
+        const markers = document.getElementsByClassName("redditMarker");
+        for (let i = 0; i < markers.length; i++) {
+            const element = markers[i];
+            element.remove();
+        }
+
         Common.addMessageListener(HandleMessages);
 
         ScanPage();
@@ -122,9 +127,10 @@ namespace Marker.Content {
         userLinks.forEach(link => {
             let wrapper = document.createElement("div");
             wrapper.style.display = "inline";
-            link.parentNode!.insertBefore(wrapper, link);
+            link.parentNode!.parentNode!.insertBefore(wrapper, link.parentNode);
             tagsData.tags.forEach(tag => {
                 const span = document.createElement("span");
+                span.classList.add("redditMarker");
                 span.style.color = "#878A8C";
                 span.style.fontSize = "12px";
                 span.style.lineHeight = "16px";
@@ -153,6 +159,7 @@ namespace Marker.Content {
         let removed = false;
         const main = document.createElement("span");
         main.style.marginLeft = "4px";
+        main.classList.add("rmPopup");
         const remove = (event: Event) => {
             if (removed) return;
             main.parentNode!.removeChild(main);
