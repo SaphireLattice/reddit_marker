@@ -129,18 +129,15 @@ namespace Marker.Background {
         switch (msg.type) {
             case Messaging.Types.USERS_INFO:
                 if (msg.data.length <= 0)
-                    return;
-                console.log(msg.data);
-                (<string[]> msg.data).forEach(username =>
-                    (Users[username] || new Data.User(username, Users))
-                    .init(Database)
+                    console.log(msg.data);
+                (<string[]> msg.data).map(s => s.toLowerCase()).forEach(username =>
+                    (Users[username] && Users[username].refresh(Database) || new Data.User(username, Users).init(Database))
                     .then(async (user) =>
                     {
                         return user.tags;
                     }).then((tags: Data.DbUserTags[]) => {
-                        if (tags.length <= 0)
-                            return;
-                        console.log(username, tags);
+                        if (tags.length > 0)
+                            console.log(username, tags);
                         Common.tabsSendMessage(sender!.tab!.id!,
                         {
                             data: {
@@ -214,7 +211,7 @@ namespace Marker.Background {
 
     export async function DoFullRefresh() {
         if (RefreshActive) {
-            console.error("A refresh is already active!");
+            console.error("A full refresh is already active!");
             return;
         }
         RefreshTimeout = null;
@@ -235,11 +232,9 @@ namespace Marker.Background {
             .then(user => user.refreshDone)
             .then((user: Data.User) => user.refreshTags(Database))
             .then((tags: Marker.Data.DbUserTags[]) => {
-                if (tags.length <= 0) {
-                    return;
+                if (tags.length > 0) {
+                    console.log(`New refreshed tags for ${username}`, tags);
                 }
-
-                console.log(`Refreshed tags for ${username}`, tags);
 
                 Common.queryTabs({url: "https://*.reddit.com/*", discarded: false, status: "complete"}).then((tabs) =>
                     tabs.forEach((tab: browser.tabs.Tab | chrome.tabs.Tab) => {

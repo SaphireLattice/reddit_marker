@@ -131,7 +131,7 @@ namespace Marker.Data {
                 else
                     await this.save(database);
             if (this.refreshing)
-                throw new Error("Refreshing in progress when init was called");
+                throw new Error(`Refreshing in progress when init was called for ${this.username}`);
             this.dbUser = await database.get<DbUser>("users", this.username);
             this.tags = await database.getList<DbUserTags>("userTags", this.username, "username");
             let dbStats = await database.getList<DbUserStats>("stats", this.username, "username");
@@ -148,7 +148,7 @@ namespace Marker.Data {
                 });
                 await this.update(database);
                 if (!this.dbUser) {
-                    throw new Error("No database user info after fetching about");
+                    throw new Error(`No database user info after fetching about for ${this.username}`);
                 }
                 await this.save(database);
                 // Set load time because if we get this user again,
@@ -242,77 +242,77 @@ namespace Marker.Data {
             return post;
         }
 
+        async listingWalk(listing: 'comments' | 'posts', direction: boolean, startOn: string | null = null) {
+            if (!this.dbUser) {
+                throw new Error("No database user info");
+            }
+            let data = (await Common.GetHttp<RedditKindWrapper<RedditListing,"Listing">>(
+                `/user/${this.username}/${listing}.json`,
+                {
+                    t: "all",
+                    sort: "new",
+                    limit: 100,
+                    allow_quarantined: "true",
+                    [direction ? "after" : "before"]: startOn
+                }
+            )).data
+            return {
+                children: data.children,
+                next: data.children.length > 0 ?
+                    (direction ? data.children[data.children.length - 1].data.name : data.children[0].data.name) : null
+            };
+        }
+
         async onlineAnalyze(database: Database.Instance) {
             console.warn("Online refresh", this.username);
             if (!this.dbUser) {
                 throw new Error("No database user info");
             }
-            let first: boolean = true;
-            let direction: boolean = !(this.dbUser.lastComment);
 
-            let commentsData: RedditListing | null = null;
-            while ((commentsData = (await Common.GetHttp<RedditKindWrapper<RedditListing,"Listing">>(
-                `/user/${this.username}/comments.json`,
-                {
-                    t: "all",
-                    sort: "new",
-                    limit: 100,
-                    allow_quarantined: "true",
-                    [direction ? "after" : "before"]:
-                        direction ?
-                            (commentsData ? commentsData.after : null) :
-                            (commentsData ? commentsData.before : this.dbUser.lastComment)
+            {
+                let direction: boolean = !(this.dbUser.lastComment);
+                let next: string | null = this.dbUser.lastComment;
+                let first: boolean = true;
+                let commentsData;
+                while ((commentsData = (await this.listingWalk("comments", direction, next))).next != null) {
+                    next = commentsData.next;
+                    if (direction && first) {
+                        this.dbUser.lastComment = commentsData.children[0].data.name;
+                        first = false
+                    }
+                    for (let i = 0; i < commentsData.children.length; i++) {
+                        if (!direction && first) {
+                            this.dbUser.lastComment = commentsData.children[0].data.name;
+                            first = false
+                        }
+                        const commentWrapper = commentsData.children[i];
+                        await this.analyzeListing(database, commentWrapper.data);
+                    }
+                    if (!direction) first = true;
                 }
-            )).data)[direction ? "after" : "before"] != null) {
-                if (first) {
-                    this.dbUser.lastComment = commentsData.children[0].data.name;
-                    first = false
-                }
-                for (let i = 0; i < commentsData.children.length; i++) {
-                    const l = commentsData.children[i];
-                    await this.analyzeListing(database, l.data);
-                }
-            }
-            if (first) {
-                this.dbUser.lastComment = commentsData.children[0].data.name;
-                first = false
-            }
-            for (let i = 0; i < commentsData.children.length; i++) {
-                const l = commentsData.children[i];
-                await this.analyzeListing(database, l.data);
             }
 
-            first = true;
-            let linkData: RedditListing | null = null;
-            while ((linkData = (await Common.GetHttp<RedditKindWrapper<RedditListing,"Listing">>(
-                `/user/${this.username}/submitted.json`,
-                {
-                    t: "all",
-                    sort: "new",
-                    limit: 100,
-                    allow_quarantined: "true",
-                    [direction ? "after" : "before"]:
-                        direction ?
-                            (linkData ? linkData.after : null) :
-                            (linkData ? linkData.before : this.dbUser.lastLink)
+            {
+                let direction: boolean = !(this.dbUser.lastLink);
+                let next: string | null = this.dbUser.lastLink;
+                let first: boolean = true;
+                let linksData;
+                while ((linksData = (await this.listingWalk("posts", direction, next))).next != null) {
+                    next = linksData.next;
+                    if (direction && first) {
+                        this.dbUser.lastLink = linksData.children[0].data.name;
+                        first = false
+                    }
+                    for (let i = 0; i < linksData.children.length; i++) {
+                        if (!direction && first) {
+                            this.dbUser.lastComment = linksData.children[0].data.name;
+                            first = false
+                        }
+                        const postWrapper = linksData.children[i];
+                        await this.analyzeListing(database, postWrapper.data);
+                    }
+                    if (!direction) first = true;
                 }
-            )).data)[direction ? "after" : "before"] != null) {
-                if (first) {
-                    this.dbUser.lastLink = linkData.children[0].data.name;
-                    first = false
-                }
-                for (let i = 0; i < linkData.children.length; i++) {
-                    const l = linkData.children[i];
-                    await this.analyzeListing(database, l.data);
-                }
-            }
-            if (first) {
-                this.dbUser.lastLink = linkData.children[0].data.name;
-                first = false
-            }
-            for (let i = 0; i < linkData.children.length; i++) {
-                const l = linkData.children[i];
-                await this.analyzeListing(database, l.data);
             }
         }
 
@@ -321,7 +321,7 @@ namespace Marker.Data {
             if (redditAbout.name.toLocaleLowerCase() != this.username) {
                 throw new Error(`Username mismatch for user ${this.username} (got ${redditAbout.name}) when getting about.json`);
             }
-            const userSub = true; //typeof redditAbout.subreddit === "object";
+            const userSub = typeof redditAbout.subreddit === "object";
             this.dbUser = {
                 username: this.username,
                 displayUsername: redditAbout.name,

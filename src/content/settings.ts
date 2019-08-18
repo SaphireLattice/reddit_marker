@@ -5,7 +5,7 @@ namespace Marker.Settings {
     let TagList: HTMLDivElement;
     let TagButtons: HTMLButtonElement[] = [];
     let Tags: Marker.Data.DbTag[] = [];
-    export let ViewedTag: Marker.Data.DbTag;
+    let ViewedTag: Marker.Data.DbTag;
     let Controls: Map<string, HTMLInputElement> = new Map();
     let ControlNames: string[] = [
         "name",
@@ -26,13 +26,13 @@ namespace Marker.Settings {
         "averageAbove"
     ]
 
-    export function Init() {
+    function Init() {
         document.getElementsByTagName("form")[0].addEventListener("submit", (ev) => ev.preventDefault());
 
         AddButton = <HTMLButtonElement> document.getElementById("addTagButton")!;
         AddButton.addEventListener("click", () => AddTag());
         DeleteButton = <HTMLButtonElement> document.getElementsByName("delete")[0]!;
-        DeleteButton.addEventListener("click", () => DeleteTag(Marker.Settings.ViewedTag));
+        DeleteButton.addEventListener("click", () => DeleteTag(ViewedTag));
 
         TagList = <HTMLDivElement> document.getElementById("tagList")!;
 
@@ -47,13 +47,13 @@ namespace Marker.Settings {
                 ViewTag(ViewedTag);
             }
             Controls.forEach(control => control.addEventListener("change", () => {
-                RefreshTag(Marker.Settings.ViewedTag);
-                UpdateTag(Marker.Settings.ViewedTag, true);
+                RefreshUser(ViewedTag);
+                UpdateTag(ViewedTag, true);
             }))
         });
     }
 
-    export function ViewTag(tag: Marker.Data.DbTag) {
+    function ViewTag(tag: Marker.Data.DbTag) {
         ViewedTag = tag;
         Controls.get("name")!.value = tag.name;
         Controls.get("color")!.value = tag.color;
@@ -83,7 +83,7 @@ namespace Marker.Settings {
         Controls.get("name")!.value = tag.name;
     }
 
-    export function RefreshTag(tag: Marker.Data.DbTag) {
+    function RefreshUser(tag: Marker.Data.DbTag) {
         tag.name = Controls.get("name")!.value;
         tag.color = Controls.get("color")!.value;
         Controls.get("colorBox")!.style.backgroundColor = tag.color;
@@ -128,7 +128,7 @@ namespace Marker.Settings {
         Controls.get("averageAbove")!.disabled = tag.settings.excludeAverage;
     }
 
-    export function UpdateTag(tag: Marker.Data.DbTag, updateTime: boolean) {
+    function UpdateTag(tag: Marker.Data.DbTag, updateTime: boolean) {
         if (updateTime) {
             tag.updated = Common.Now();
         }
@@ -136,7 +136,7 @@ namespace Marker.Settings {
         RefreshList();
     }
 
-    export function DeleteTag(tag: Marker.Data.DbTag) {
+    function DeleteTag(tag: Marker.Data.DbTag) {
         new Messaging.Message(tag.id, Messaging.Types.DELETE_TAG).send();
         const button = (<any> tag)[ButtonSymbol];
         const index = TagButtons.indexOf(button);
@@ -161,7 +161,7 @@ namespace Marker.Settings {
         ViewTag(ViewedTag);
     }
 
-    export function AddTag() {
+    function AddTag() {
         ViewedTag = {
             color: "#ff0000",
             type: "SubredditActivity",
@@ -196,14 +196,14 @@ namespace Marker.Settings {
         ViewTag(ViewedTag);
     }
 
-    export function SwitchTag(target: Marker.Data.DbTag) {
-        RefreshTag(ViewedTag);
+    function SwitchTag(target: Marker.Data.DbTag) {
+        RefreshUser(ViewedTag);
         UpdateTag(ViewedTag, false);
         ViewedTag = target;
         ViewTag(ViewedTag);
     }
 
-    export function RefreshList() {
+    function RefreshList() {
         TagButtons.forEach(button => button.remove());
         const sorted = Tags.slice(0).sort((a,b) => b.updated - a.updated);
         sorted.forEach((tag) => {
