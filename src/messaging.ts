@@ -23,22 +23,30 @@ namespace Marker.Messaging {
         DELETE_TAG = "delete_tag",
         USER_TAGS = "user_tags", // Content -- Tags for users as needed
         USERS_INFO = "users_info", // Bg -- Reports all visible users on page
+
         GET_USER_STATS = "get_user_stats",
-        OPEN_USER_STATS = "open_user_stats"
+        OPEN_USER_STATS = "open_user_stats",
+
+        REFRESH_TAGS = "refresh_tags",
+        USERS_CACHE_UNLOAD = "users_cache_unload",
+        DB_RESET = "database_reset",
+        DB_OUTDATE = "database_outdate",
+
+        UNKNOWN = "unknown_message_type"
     }
 
     export class Message<Data = any, Response = any> {
         private listener: (any);
         constructor(
             public data: Data,
-            public type: string,
+            public type: Types,
             public sender?: browser.runtime.MessageSender,
             private nonce?: number)
         {
             this.nonce = nonce ? nonce : window.crypto.getRandomValues(new Uint32Array(1))[0];
         };
 
-        send(replyType: string = this.type): Promise<Response> {
+        send(replyType: Types = this.type): Promise<Response> {
             if (this.sender) {
                 throw new Error("Sending is used to start messaging chain, use reply instead");
             }

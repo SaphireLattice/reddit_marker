@@ -245,7 +245,7 @@ namespace Marker.Database {
             return await this.rawSet(table.name, object);
         }
 
-        public async delete(tableName: string, value: number | string | IDBKeyRange, column?: string) {
+        public async delete(tableName: string, value?: number | string | IDBKeyRange, column?: string) {
             return await new Promise((resolve, reject) => {
                 var transaction = this.database!.transaction(tableName, "readwrite")
                 transaction.addEventListener("error", (error) => {
@@ -260,7 +260,7 @@ namespace Marker.Database {
                     request = transaction.objectStore(tableName).openCursor(value);
 
                 request.addEventListener("error", (error) => {
-                    console.error(`Database GETLIST request failed for ${tableName}["${value}"]`, error);
+                    console.error(`Database DELETE request failed for ${tableName}["${value}"]`, error);
                     reject(error);
                 });
                 request.addEventListener("success", (event) => {

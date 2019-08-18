@@ -242,7 +242,7 @@ namespace Marker.Data {
             return post;
         }
 
-        async listingWalk(listing: 'comments' | 'posts', direction: boolean, startOn: string | null = null) {
+        async listingWalk(listing: 'comments' | 'submitted', direction: boolean, startOn: string | null = null) {
             if (!this.dbUser) {
                 throw new Error("No database user info");
             }
@@ -297,7 +297,7 @@ namespace Marker.Data {
                 let next: string | null = this.dbUser.lastLink;
                 let first: boolean = true;
                 let linksData;
-                while ((linksData = (await this.listingWalk("posts", direction, next))).next != null) {
+                while ((linksData = (await this.listingWalk("submitted", direction, next))).next != null) {
                     next = linksData.next;
                     if (direction && first) {
                         this.dbUser.lastLink = linksData.children[0].data.name;

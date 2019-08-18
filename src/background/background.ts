@@ -111,15 +111,16 @@ namespace Marker.Background {
         }
     ]);
     export let Tags: Tags.Instance | null = null;
+    export const Users: { [name: string]: Data.User} = {};
     Database.init().then((db) => Tags = new Marker.Tags.Instance(db));
 
     Common.browserAction.onClicked.addListener(
         () => Common.tabs.create({ url: "settings.html" })
     );
 
-    export const Users: { [name: string]: Data.User} = {};
-
+    let StopListener = false;
     Common.addMessageListener((msgPlain: any, sender: browser.runtime.MessageSender) => {
+        if (StopListener) return;
         let msg = new Marker.Messaging.Message(
             msgPlain.data,
             msgPlain.type,
@@ -183,24 +184,67 @@ namespace Marker.Background {
                 Database.getList("tags").then(tags => msg.reply(tags));
                 break;
             case Messaging.Types.SET_TAG:
-                Database.set("tags", msg.data);
-                TryRefresh();
+                Database.set("tags", msg.data).then(() => TryRefresh());
                 break;
             case Messaging.Types.DELETE_TAG:
-                Database.delete("tags", msg.data);
+                Database.delete("tags", msg.data).then(() => TryRefresh());
+                break;
+            case Messaging.Types.REFRESH_TAGS:
                 TryRefresh();
                 break;
+            case Messaging.Types.USERS_CACHE_UNLOAD:
+                StopListener = true;
+                ResetUserCache().then(() => StopListener = false);
+                break;
+            case Messaging.Types.DB_RESET:
+                StopListener = true;
+                ResetUserCache().then(async () => {
+                    await Database.delete("posts");
+                    await Database.delete("stats");
+                    await Database.delete("userTags");
+                    await Database.delete("users");
+                    StopListener = false;
+                });
+                break;
+            case Messaging.Types.DB_OUTDATE:
+                    StopListener = true;
+                ResetUserCache()
+                    .then(() => Database.getList<Data.DbUser>("users"))
+                    .then((users) => users.map(
+                        (user) => {
+                            user.updated = 0;
+                            user.lastComment = null;
+                            user.lastLink = null;
+                            return Database.set("users", user);
+                        }
+                    ))
+                    .then((promises) => Promise.all(promises))
+                    .then(() => StopListener = false);
+                break;
             default:
-                msg.reply(`Unknown message type ${msg.type}`, false, "unknown_message_type");
+                msg.reply(`Unknown message type ${msg.type}`, false, Messaging.Types.UNKNOWN);
                 console.error(`Unknown message type ${msg.type}`);
                 throw new Error(`Unknown message type ${msg.type}`);
         }
     });
 
+    export async function ResetUserCache() {
+        let promises = []
+        for (const username in Users) {
+            if (Users.hasOwnProperty(username)) {
+                promises.push(Users[username].refreshDone.then(() => delete Users[username]));
+            }
+        }
+        await Promise.all(promises);
+    }
+
     let RefreshTimeout: any;
-    let RefreshActive: boolean = false;
+    let RefreshActive: number = 0;
     export function TryRefresh() {
         if (RefreshActive) {
+            if (Common.Now() - RefreshActive > 60 * 2) {
+                console.warn(`Refresh attempt failed due to an active refresh started ${Common.Now() - RefreshActive}s ago`)
+            }
             return;
         }
         if (RefreshTimeout) {
@@ -215,7 +259,7 @@ namespace Marker.Background {
             return;
         }
         RefreshTimeout = null;
-        RefreshActive = true;
+        RefreshActive = Common.Now();
         Tags!.refresh(Database);
         const usersDb = await Database.getList<Data.DbUser>("users");
         let promises: Promise<any>[] = []
@@ -263,11 +307,11 @@ namespace Marker.Background {
         try {
             const result = await Promise.all(promises);
             console.log("Tag refresh done");
-            RefreshActive = false;
+            RefreshActive = 0;
             return result;
         } catch (error) {
             console.error("Unrecoverable tag refresh error", error);
-            RefreshActive = false;
+            RefreshActive = 0;
             return Promise.reject(error);
         }
     }

@@ -65,7 +65,6 @@ namespace Marker.UserView {
                 sorter = (a, b) => {
                     let scoreA = a.commentKarma + a.linkKarma;
                     let scoreB = b.commentKarma + b.linkKarma;
-                    console.log(scoreA, scoreB, scoreB - scoreA);
                     return scoreB - scoreA;
                 };
                 break;
@@ -73,7 +72,6 @@ namespace Marker.UserView {
                 sorter = (a, b) => {
                     let scoreA = a.commentKarma + a.linkKarma;
                     let scoreB = b.commentKarma + b.linkKarma;
-                    console.log(scoreA, scoreB, scoreA - scoreB);
                     return scoreA - scoreB;
                 };
                 break;
@@ -81,7 +79,7 @@ namespace Marker.UserView {
                 sorter = (a, b) => a.subreddit > b.subreddit ? 1 : -1;
                 break;
         }
-        console.log(`Sorting as: "${SortSelect.value}"`, sorter);
+        console.log(`Sorting as: "${SortSelect.value}" with`, sorter);
         ViewedUserStats.slice()
             .sort(sorter)
             .forEach((stat) => {
