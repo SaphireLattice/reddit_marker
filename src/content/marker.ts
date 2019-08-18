@@ -125,7 +125,8 @@ namespace Marker.Content {
         }
         existing = [];
         userLinks.forEach(link => {
-            let wrapper = document.createElement("div");
+            let wrapper = document.createElement("a");
+            wrapper.href = Common.internalURL("/user.html#" + tagsData.username)
             wrapper.style.display = "inline";
             link.parentNode!.parentNode!.insertBefore(wrapper, link.parentNode);
             tagsData.tags.forEach(tag => {

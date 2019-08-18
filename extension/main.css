@@ -42,12 +42,32 @@ textarea, input[type="text"], input[type="number"] {
     border: none;
     border-left: 2px solid #242427;
 }
+select {
+	display: block;
+	font-size: 12px;
+	font-family: sans-serif;
+    font-weight: 700;
+    width: 100%;
+	color: #444;
+	line-height: 1;
+	padding: .6em 2em .5em .8em;
+	margin: 0 0.5em;
+	border: none;
+    border-right: 2px solid #242427;
+	box-shadow: none;
+	border-radius: 0;
+	-moz-appearance: none;
+	-webkit-appearance: none;
+	appearance: none;
+	background-color: #fff;
+}
 label {
     display: block;
     text-align: left;
-
-    border-bottom: 1px solid #ddd;
     margin-bottom: 0.5em;
+}
+form:not([data-no-border]) {
+    border-bottom: 1px solid #ddd;
 }
 label[data-inline] {
     align-items: baseline;
@@ -76,6 +96,18 @@ form {
 }
 form h1, form h2, form h3, form h4 {
     text-align: left;
+}
+
+.stat {
+    display: flex;
+    flex-direction: column;
+    padding: 1em;
+}
+.stat:nth-child(2n) {
+    background-color: #c4c4c7;
+}
+.stat .subreddit {
+    font-weight: bold;
 }
 
 @media only screen and (max-width: 799px) {

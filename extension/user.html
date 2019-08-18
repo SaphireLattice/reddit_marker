@@ -1,0 +1,46 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width,initial-scale=1">
+
+    <title>User Statistics View - Reddit User Tagger</title>
+
+    <link rel="stylesheet" href="main.css" type="text/css">
+    <script type="text/javascript" src="js/common.js">
+    </script>
+    <script type="text/javascript" src="js/messaging.js">
+    </script>
+    <script type="text/javascript" src="js/content/userView.js">
+    </script>
+</head>
+
+<body>
+<div id="column">
+    <h1>User statistics</h1>
+    <hr>
+    <div id="content">
+        <div id="controls">
+            <form id="form" data-no-border>
+                <label data-inline>
+                    <span>Username:</span>
+                    <input id="username" name="username" title="username" type="text" value="" placeholder="Enter username">
+                    <span>Sort: </span>
+                    <select id="sort" name="sort">
+                        <option>score (desc)</option>
+                        <option>score (asc)</option>
+                        <option>sub name</option>
+                    </select>
+                </label>
+                <label data-inline>
+                </label>
+                <button id="refresh" title="refresh">Refresh</button>
+            </form>
+            <div id="stats">Enter username</div>
+        </span>
+    </div>
+</div>
+</body>
+
+</html>

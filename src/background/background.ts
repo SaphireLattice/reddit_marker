@@ -160,6 +160,21 @@ namespace Marker.Background {
                     })
                 );
                 break;
+            case Messaging.Types.GET_USER_STATS:
+                if (msg.data == "")
+                    return;
+                msg.data = msg.data.toLowerCase();
+                console.log("Gettings stats for", msg.data);
+                (Users[msg.data] && Users[msg.data].refresh(Database) || new Data.User(msg.data, Users).init(Database))
+                .then((user) => user.stats)
+                .then((stats) => {
+                    console.log("Stats", msg.data, stats);
+                    msg.reply({
+                        username: msg.data,
+                        stats: stats
+                    })
+                })
+                break;
             case Messaging.Types.GET_TAGS:
                 Database.getList("tags").then(tags => msg.reply(tags));
                 break;

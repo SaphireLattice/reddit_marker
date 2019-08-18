@@ -104,4 +104,7 @@ namespace Marker.Common {
         }
         return browser.tabs.query(query);
     }
+    export function internalURL(path: string) {
+        return (chrome ? chrome : browser).runtime.getURL(path);
+    }
 }

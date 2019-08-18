@@ -21,8 +21,9 @@ namespace Marker.Messaging {
         GET_TAGS = "get_tags",
         SET_TAG = "set_tag",
         DELETE_TAG = "delete_tag",
-        USER_TAGS = "user_tags", // Content -> Tags for users as needed
-        USERS_INFO = "users_info" // Bg -> Reports all visible users on page
+        USER_TAGS = "user_tags", // Content -- Tags for users as needed
+        USERS_INFO = "users_info", // Bg -- Reports all visible users on page
+        GET_USER_STATS = "get_user_stats",
     }
 
     export class Message<Data = any, Response = any> {
