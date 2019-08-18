@@ -127,6 +127,9 @@ namespace Marker.Content {
         userLinks.forEach(link => {
             let wrapper = document.createElement("a");
             wrapper.href = Common.internalURL("/user.html#" + tagsData.username)
+            wrapper.addEventListener("click", () => {
+                new Messaging.Message(tagsData.username, Messaging.Types.OPEN_USER_STATS).send()
+            });
             wrapper.style.display = "inline";
             link.parentNode!.parentNode!.insertBefore(wrapper, link.parentNode);
             tagsData.tags.forEach(tag => {

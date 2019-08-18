@@ -175,6 +175,13 @@ namespace Marker.Background {
                     })
                 })
                 break;
+            case Messaging.Types.OPEN_USER_STATS:
+                (chrome ? chrome : browser).tabs.create({
+                    active: true,
+                    openerTabId: sender.tab ? sender.tab.id : undefined,
+                    url: Common.internalURL("/user.html#" + msg.data)
+                })
+                break;
             case Messaging.Types.GET_TAGS:
                 Database.getList("tags").then(tags => msg.reply(tags));
                 break;
