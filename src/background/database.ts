@@ -237,7 +237,8 @@ namespace Marker.Database {
                 if (typeof col === "object" && col.foreignTable) {
                     let foreign = await this.get(col.foreignTable, value);
                     if (!foreign) {
-                        throw new Error(`Foreign key ${name} is invalid`)
+                        console.error(`Foreign key ${name} is invalid`);
+                        //throw new Error(`Foreign key ${name} is invalid`)
                     }
                 }
             }

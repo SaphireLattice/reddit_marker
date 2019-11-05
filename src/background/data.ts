@@ -228,7 +228,7 @@ namespace Marker.Data {
             }
             let previous = await database.get<DbPost>("posts", post.id);
             let previousScore = previous ? previous.score : 0;
-            if (listing.id.startsWith("t1")) {
+            if (listing.name.startsWith("t3")) {
                 stat.linkCount += previous ? 0 : 1;
                 stat.linkKarma += Math.max(post.score - previousScore, -KNOWN_MAX_KARMA_LOSS);
             } else {
@@ -309,6 +309,7 @@ namespace Marker.Data {
                             first = false
                         }
                         const postWrapper = linksData.children[i];
+                        console.log("Analyzing /post/ ", postWrapper.data);
                         await this.analyzeListing(database, postWrapper.data);
                     }
                     if (!direction) first = true;
